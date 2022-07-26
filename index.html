@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8" />
+        <title>Generador de certificados</title>
+        <style type="text/css">
+            p{
+                margin: 0px;
+            }
+        </style>
+    </head>
+    <body>
+        <button onclick="comenzar(this)" type="button">comenzar</button>
+        <br />
+        <div id="trace">
+
+        </div>
+        
+    </body>
+    <script src="assets/jquery-3.2.1.min.js"></script>
+    <script src="assets/data.js"></script>
+    <script>
+        //select "id","document","name","last_name" from users_users where id in (select users_user_id from content_enrollments where content_course_id = 538 and approved = true);
+        var usuarios_repetidos = []
+        var datos_usuario_old = []
+        //1152690383,1128278176,1036667176,1152700236,1053790120,1017190921
+
+        function comenzar(btn){
+            btn.disabled = true
+            generarC()
+        }
+
+        var c = 0
+        var limit = datos_usuario.length
+        function generarC(){
+            var datos = datos_usuario[c]
+
+            var p = document.createElement('p')
+            p.innerHTML = 'generando certificado de '+datos[1]+'...'
+            document.getElementById('trace').appendChild(p)
+            window.scrollTo(0,document.body.scrollHeight);
+
+            //mirar si esta repetido
+            if(usuarios_repetidos.indexOf(datos[0])!=-1){
+                //repetido
+                var p4 = document.createElement('p')
+                p4.innerHTML = 'Usuario repetido '+datos[0]
+                document.getElementById('trace').appendChild(p4)
+                window.scrollTo(0,document.body.scrollHeight);
+
+                nextFunction()
+            }else{
+                //mirar que no este en la base de datos vieja
+                var repe = false
+                for(var i = 0;i<datos_usuario_old.length;i++){
+                    if(datos_usuario_old[i][0]==datos[0]){
+                        repe = true
+                    }
+                }
+                if(repe){
+                    var p5 = document.createElement('p')
+                    p5.innerHTML = 'Usuario repetido en la otra base de datos '+datos[0]
+                    document.getElementById('trace').appendChild(p5)
+                    window.scrollTo(0,document.body.scrollHeight);
+
+                    nextFunction()
+                }else{
+                    $.ajax({
+                        type:'post',
+                        url:'robot.php',
+                        data:{
+                            id:datos[0],
+                            documento:datos[1],
+                            nombre:datos[2],
+                            apellido:datos[3]
+                        },
+                        success: function(result){
+                            var p3 = document.createElement('p')
+                            p3.innerHTML = '100%, esperando'
+                            document.getElementById('trace').appendChild(p3)
+                            window.scrollTo(0,document.body.scrollHeight);
+    
+                            usuarios_repetidos.push(datos[0])
+        
+                            animacion_espera = setTimeout(function(){
+                                clearTimeout(animacion_espera)
+                                animacion_espera = null
+        
+                                nextFunction()
+                            },50)
+                            
+                        },
+                        error: function(xhr){
+                            alert("error")
+                            console.log(xhr.responseText)
+                        }
+                    })
+                }
+            }
+        }
+
+        function nextFunction(){
+            c++
+            if(c==limit){
+                alert("Listo todo")
+                var p2 = document.createElement('p')
+                p2.innerHTML = 'Certificados generados con éxito'
+                document.getElementById('trace').appendChild(p2)
+                window.scrollTo(0,document.body.scrollHeight);
+            }else{
+                generarC()
+            }
+        }
+    </script>
+</html>
